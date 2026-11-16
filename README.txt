@@ -102,3 +102,9 @@ NEU in v0.10:
 - Eingabeformulare für Gewicht und Laborwerte werden nach dem Speichern vollständig geleert.
 - Monats- und Jahresübersicht orientiert sich am ausgewählten Tag. Sie zeigt dokumentierte Ernährungsmittelwerte sowie erste/letzte Gewichts- und Blutmessung im Zeitraum.
 - Keine Ernährungstage ohne Einträge werden als 0 mg interpretiert.
+
+
+Installationskorrektur v0.10.1:
+- PWA-Manifest mit 192x192- und 512x512-App-Icons ergänzt.
+- Start-URL und Scope auf das GitHub-Pages-Unterverzeichnis gesetzt.
+- Service-Worker-Cache-Version erhöht und Icons in den Offline-Cache aufgenommen.
