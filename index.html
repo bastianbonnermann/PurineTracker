@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#176b52">
+<title>PurineTracker – Offline-Prototyp</title>
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{color-scheme:light;--green:#176b52;--green2:#e6f4ee;--ink:#17211d;--muted:#5d6b64;--line:#dce5df;--bg:#f4f7f5;--card:#fff;--warn:#fff3d6}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:var(--green);color:white;padding:20px 16px 16px;position:sticky;top:0;z-index:3;box-shadow:0 2px 8px #0001}
+.headrow{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:760px;margin:auto}h1{font-size:1.25rem;margin:0}header small{opacity:.86}main{max-width:760px;margin:auto;padding:16px 12px 96px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 1px 2px #00000005}
+h2{font-size:1.08rem;margin:0 0 12px}h3{font-size:1rem;margin:0 0 8px}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{background:#f7faf8;border-radius:12px;padding:12px}.metric span{display:block;color:var(--muted);font-size:.82rem}.metric strong{font-size:1.5rem;display:block;margin-top:2px}
+.progress{height:9px;background:#e7eee9;border-radius:99px;overflow:hidden;margin:12px 0 5px}.progress div{height:100%;width:0;background:var(--green);transition:width .2s}
+label{display:block;font-weight:600;font-size:.9rem;margin:10px 0 5px}input,select,button{font:inherit}input,select{width:100%;padding:11px 12px;border:1px solid #cbd7cf;border-radius:10px;background:white;color:var(--ink);min-height:44px}
+button{border:0;border-radius:10px;padding:11px 14px;min-height:44px;background:var(--green);color:white;font-weight:650;cursor:pointer}button.secondary{background:#edf3ef;color:var(--ink);border:1px solid var(--line)}button.danger{background:#fff0ef;color:#9a2d24;border:1px solid #f2c9c5}button:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}.row .tight{flex:0 0 auto}.hidden{display:none!important}.subtle{color:var(--muted);font-size:.87rem}.pill{display:inline-block;padding:3px 8px;background:var(--green2);color:#14513f;border-radius:99px;font-size:.78rem}
+.foodlist{display:flex;flex-direction:column;gap:7px;margin-top:10px}.food-section-title{font-weight:700;font-size:.9rem;margin:14px 0 2px}.amount-presets{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}.amount-presets button{min-height:36px;padding:6px 12px}.food-hint{padding:9px 11px;background:#f7faf8;border-radius:10px;margin-top:8px}.fooditem{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;background:white;padding:10px;text-align:left;color:var(--ink);width:100%;font-weight:400}.fooditem.active{border-color:var(--green);background:var(--green2)}.fooditem .foodtext{flex:1;min-width:0}.fooditem strong{display:block}.fooditem small{display:block;color:var(--muted);font-size:.8rem}.fooditem .star{font-size:1.2rem;color:var(--green);flex:0 0 auto}
+.entry{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}.entry:last-child{border-bottom:0}.entry .details{min-width:0;flex:1}.entry small{display:block;color:var(--muted)}.entry .delete{padding:6px 10px;min-height:36px}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:4;background:#ffffffed;backdrop-filter:blur(10px);border-top:1px solid var(--line);display:flex;justify-content:center;padding:7px max(8px,env(safe-area-inset-right)) calc(7px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))}
+nav button{flex:1;max-width:190px;background:transparent;color:var(--muted);padding:8px 4px;font-size:.8rem;min-height:50px}nav button.active{color:var(--green);background:var(--green2)}
+.chart{width:100%;height:220px;display:block;background:#fbfdfb;border:1px solid var(--line);border-radius:12px}.chart text{font:11px system-ui;fill:var(--muted)}.chart .gridline{stroke:#e3ebe5;stroke-width:1}.chart .line{fill:none;stroke:var(--green);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.chart .dot{fill:var(--green);stroke:white;stroke-width:2}.recordlist{display:flex;flex-direction:column;gap:6px;margin-top:10px}.record{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--line);border-radius:10px}.record small{display:block;color:var(--muted)}.record button{min-height:34px;padding:5px 9px}.note{background:var(--warn);border-radius:10px;padding:10px 12px;font-size:.86rem}
+.meal-group{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:10px 0}.meal-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:4px}.meal-head strong{font-size:.96rem}.entry-actions{display:flex;gap:6px;flex:0 0 auto}.entry-actions button{min-height:34px;padding:5px 9px}.entry.editing{display:block}.entry.editing>.details{width:100%}.edit-panel{width:100%;background:#f7faf8;border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px}.edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.edit-grid label{margin-top:4px}.period-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.period-day{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)}.period-day:last-child{border-bottom:0}.ingredient-row{display:grid;grid-template-columns:minmax(0,1fr) 105px 42px;gap:7px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}.ingredient-row:last-child{border-bottom:0}.recipe-card{border:1px solid var(--line);border-radius:12px;padding:12px;margin:9px 0}.recipe-card p{margin:5px 0}.recipe-actions{display:flex;gap:8px;align-items:center;margin-top:10px}.recipe-actions input{max-width:120px}.status{font-size:.8rem;color:#d7f2e5}.error{color:#a02a24}.ok{color:var(--green)}
+.day-status{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#f7faf8}.day-status button{min-width:190px}.calendar-head{display:flex;justify-content:space-between;align-items:center;gap:8px}.calendar-head button{min-width:44px;padding:8px}.calendar-title{font-weight:700;text-align:center;flex:1}.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-top:10px}.calendar-weekday{text-align:center;color:var(--muted);font-size:.75rem;padding:4px 0}.calendar-day{min-height:42px;padding:5px 2px;background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:.85rem}.calendar-day.muted{opacity:.35}.calendar-day.selected{outline:2px solid var(--green);outline-offset:1px}.calendar-day.open{background:#fff5dc;border-color:#ead49a}.calendar-day.closed{background:#e5f3ec;border-color:#a8d2bd}.calendar-day .dot{font-size:.65rem;line-height:1}.calendar-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:.78rem;color:var(--muted)}.legend-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px}.legend-open{background:#d3a83d}.legend-closed{background:#23845f}.legend-none{background:#c7d0ca}.day-status-text{min-width:0;flex:1}.day-status-text strong{display:block}.day-status-text span{display:block;color:var(--muted);font-size:.83rem}
+footer{text-align:center;color:var(--muted);font-size:.78rem;padding:8px 0 14px}
+@media(min-width:600px){main{padding-top:22px}.card{padding:18px}.metrics{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.calendar-day{min-height:38px;font-size:.78rem}.calendar-grid{gap:3px}.day-status button{width:100%}.edit-grid{grid-template-columns:1fr}.edit-grid select{min-width:0}.edit-grid label{margin-top:2px}.entry.editing{display:block}.entry-actions{width:100%;justify-content:flex-end}.meal-head{align-items:flex-start;flex-direction:column;gap:2px}.period-grid{grid-template-columns:1fr}.period-day{align-items:flex-start;flex-wrap:wrap}.entry{flex-wrap:wrap}.entry .details{width:100%}}
+</style>
+</head>
+<body>
+<header><div class="headrow"><div><h1>PurineTracker</h1><small>Offline-Prototyp · lokale Daten</small></div><div id="onlineState" class="status">Prüfe Verbindung …</div></div></header>
+<main>
+<section id="view-today">
+  <div class="card">
+    <div class="row" style="align-items:flex-start"><div><h2>Heute</h2><div id="todayDate" class="subtle"></div></div><div style="max-width:170px"><label for="dayPicker" style="margin-top:0">Tag auswählen</label><input id="dayPicker" type="date"></div></div>
+    <div class="metrics">
+      <div class="metric"><span>Harnsäure-Äquivalent</span><strong id="dailyUA">0 mg</strong><span>geschätzte Nahrungsaufnahme</span></div>
+      <div class="metric"><span>Purin</span><strong id="dailyPurin">0 mg</strong><span>geschätzte Nahrungsaufnahme</span></div>
+    </div>
+    <div class="progress"><div id="progressFill"></div></div>
+    <div id="goalText" class="subtle">Orientierungswert: 500 mg/Tag</div>
+  </div>
+  <div class="card"><h2>Einträge</h2><div id="dailyEntries" class="subtle">Noch keine Einträge für diesen Tag.</div></div>
+  <div class="card"><h2>Tageserfassung</h2><div id="dayStatusPanel"></div></div>
+  <div class="card"><h2>Kalender</h2><p class="subtle">Wähle einen Tag aus. Die Markierung zeigt nur den Dokumentationsstatus, nicht die Anzahl der Mahlzeiten.</p><div class="calendar-head"><button id="calendarPrev" class="secondary" aria-label="Vorheriger Monat">‹</button><div id="calendarMonthLabel" class="calendar-title"></div><button id="calendarNext" class="secondary" aria-label="Nächster Monat">›</button></div><div id="calendarGrid" class="calendar-grid"></div><div class="calendar-legend"><span><i class="legend-dot legend-closed"></i>Abgeschlossen</span><span><i class="legend-dot legend-open"></i>Offen</span><span><i class="legend-dot legend-none"></i>Keine Angaben</span></div></div>
+  <div class="card"><h2>Auswertungen</h2><p class="subtle">Wochen- und Monatswerte beziehen sich auf dokumentierte Tage. Tage ohne Einträge werden nicht als 0 mg gewertet.</p><div id="periodReports"></div></div>
+  <div class="card">
+    <h2>Neuen Eintrag hinzufügen</h2>
+    <div class="row">
+      <button id="quickFood">Lebensmittel</button>
+      <button id="quickRecipe" class="secondary">Rezept</button>
+    </div>
+  </div>
+</section>
+
+<section id="view-food" class="hidden">
+  <div class="card">
+    <h2>Lebensmittel hinzufügen</h2>
+    <p class="subtle">Favoriten stehen zuerst. Suche und Berechnung funktionieren aus der lokal gespeicherten Importdatei.</p>
+    <label for="meal">Mahlzeit</label>
+    <select id="meal"><option>Frühstück</option><option>Mittagessen</option><option>Abendessen</option><option>Snack</option><option>Getränk</option></select>
+    <label for="foodSearch">Lebensmittel suchen</label><input id="foodSearch" type="search" placeholder="z. B. Kartoffel, Haferflocken …" autocomplete="off">
+    <div class="row">
+      <label style="display:flex;align-items:center;gap:8px;font-weight:500"><input id="favoritesOnly" type="checkbox" style="width:20px;min-height:20px">Nur Favoriten</label>
+      <div class="subtle" id="foodCount" style="text-align:right"></div>
+    </div>
+    <div id="foodList" class="foodlist"></div>
+    <div id="foodDetails" class="hidden">
+      <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+      <h3 id="selectedName">Lebensmittel</h3>
+      <div id="selectedMeta" class="subtle"></div>
+      <label for="grams">Gegessene Menge (g)</label>
+      <div class="amount-presets" aria-label="Häufige Mengen">
+        <button type="button" class="secondary" data-grams="50">50 g</button><button type="button" class="secondary" data-grams="100">100 g</button><button type="button" class="secondary" data-grams="150">150 g</button><button type="button" class="secondary" data-grams="200">200 g</button>
+      </div>
+      <div class="row"><button class="secondary tight" id="minus10" aria-label="10 Gramm abziehen">−10</button><input id="grams" type="number" min="0" step="1" value="100" inputmode="decimal"><button class="secondary tight" id="plus10" aria-label="10 Gramm hinzufügen">+10</button></div>
+      <div class="metrics" style="margin-top:12px">
+        <div class="metric"><span>Purin</span><strong id="previewPurin">0 mg</strong><span>für diese Menge</span></div>
+        <div class="metric"><span>Harnsäure-Äquivalent</span><strong id="previewUA">0 mg</strong><span>für diese Menge</span></div>
+      </div>
+      <div id="measuredUA" class="subtle" style="margin-top:8px"></div>
+      <div class="row" style="margin-top:12px">
+        <button id="saveEntry">Speichern & Tagesübersicht</button><button id="toggleFavorite" class="secondary">☆ Favorit</button>
+      </div>
+      <button id="saveAndNext" class="secondary" style="width:100%;margin-top:8px">Speichern & nächstes Lebensmittel</button>
+      <div id="foodSaveHint" class="subtle" role="status" aria-live="polite" style="margin-top:6px"></div>
+      <p class="subtle">0 g wird nicht als Eintrag gespeichert. Vorhandene Datenwerte werden verwendet und nicht automatisch mit einem Faktor überschrieben.</p>
+    </div>
+  </div>
+</section>
+
+<section id="view-recipes" class="hidden">
+  <div class="card">
+    <h2>Meine Rezepte</h2>
+    <p class="subtle">Lege ein Gericht einmal mit seinen Zutaten an. Nach dem Kochen gibst du das tatsächliche Fertiggewicht an. Die Werte pro 100 g werden daraus berechnet.</p>
+    <div id="recipeList" class="subtle">Noch keine Rezepte angelegt.</div>
+  </div>
+  <div class="card">
+    <h2>Neues Rezept anlegen</h2>
+    <label for="recipeName">Rezeptname</label><input id="recipeName" type="text" maxlength="100" placeholder="z. B. Kartoffelsuppe">
+    <label for="recipeFoodSearch">Zutat suchen</label><input id="recipeFoodSearch" type="search" placeholder="Lebensmittel eingeben …" autocomplete="off">
+    <div id="recipeFoodResults" class="foodlist"></div>
+    <div id="recipeIngredientEditor" class="hidden">
+      <div class="row"><div><strong id="recipeSelectedFood"></strong><div id="recipeSelectedMeta" class="subtle"></div></div><div style="max-width:130px"><label for="recipeIngredientGrams">Menge (g)</label><input id="recipeIngredientGrams" type="number" min="0.1" step="0.1" value="100"></div></div>
+      <button id="addRecipeIngredient" style="width:100%;margin-top:8px">Zutat hinzufügen</button>
+    </div>
+    <h3 style="margin-top:16px">Zutaten im Rezept</h3><div id="recipeDraftIngredients" class="subtle">Noch keine Zutaten hinzugefügt.</div>
+    <div class="metrics" style="margin-top:12px"><div class="metric"><span>Purin gesamt</span><strong id="recipeDraftPurin">0 mg</strong></div><div class="metric"><span>Harnsäure-Äquivalent gesamt</span><strong id="recipeDraftUA">0 mg</strong></div></div>
+    <label for="recipeFinishedWeight">Fertiggewicht des Gerichts (g)</label><input id="recipeFinishedWeight" type="number" min="1" step="1" placeholder="Gewicht nach dem Kochen">
+    <div class="metrics" style="margin-top:10px"><div class="metric"><span>Purin je 100 g</span><strong id="recipePer100Purin">–</strong></div><div class="metric"><span>Harnsäure-Äquivalent je 100 g</span><strong id="recipePer100UA">–</strong></div></div>
+    <button id="saveRecipe" style="width:100%;margin-top:12px" disabled>Rezept speichern</button>
+    <p class="subtle">Die Zutatenwerte werden aus der Lebensmitteldatenbank übernommen. Das Fertiggewicht berücksichtigt Wasseraufnahme oder -verlust rechnerisch über die Konzentration pro 100 g.</p>
+  </div>
+</section>
+
+<section id="view-progress" class="hidden">
+  <div class="card"><h2>Persönlicher Fortschritt</h2><p class="subtle">Gewicht und tatsächliche Harnsäure-Laborwerte werden getrennt dokumentiert und dargestellt.</p>
+    <div class="metrics">
+      <div class="metric"><span>Letztes Gewicht</span><strong id="latestWeight">95,0 kg</strong><span id="weightDateLabel">Ausgangswert · 22.10.2026</span></div>
+      <div class="metric"><span>Letzter Blutwert</span><strong id="latestBlood">8,5 mg/dl</strong><span id="bloodDateLabel">Datum noch nicht hinterlegt</span></div>
+    </div>
+    <div class="note" style="margin-top:12px">Der Harnsäure-Äquivalentwert aus Lebensmitteln ist ein rechnerischer Orientierungswert und keine Vorhersage des Blutwerts.</div>
+  </div>
+  <div class="card"><h2>Gewichtsverlauf</h2><p class="subtle">Eigene Messreihe in Kilogramm.</p><svg id="weightChart" class="chart" viewBox="0 0 640 220" role="img" aria-label="Diagramm Gewichtsverlauf"></svg><div id="weightRecords" class="recordlist"></div>
+    <hr style="border:0;border-top:1px solid var(--line);margin:16px 0"><h3>Gewicht erfassen</h3>
+    <div class="row"><div><label for="weightDate">Messdatum</label><input id="weightDate" type="date"></div><div><label for="weightValue">Gewicht (kg)</label><input id="weightValue" type="number" min="1" max="500" step="0.1" placeholder="z. B. 94,5"></div></div>
+    <button id="saveWeight" style="margin-top:10px;width:100%">Gewicht speichern</button>
+  </div>
+  <div class="card"><h2>Harnsäure im Blut</h2><p class="subtle">Laborwerte in mg/dl – unabhängig vom Ernährungs-Tageswert.</p><svg id="bloodChart" class="chart" viewBox="0 0 640 220" role="img" aria-label="Diagramm Harnsäure im Blut"></svg><div id="bloodRecords" class="recordlist"></div>
+    <hr style="border:0;border-top:1px solid var(--line);margin:16px 0"><h3>Laborwert erfassen</h3>
+    <div class="row"><div><label for="bloodDate">Messdatum</label><input id="bloodDate" type="date"></div><div><label for="bloodValue">Harnsäure (mg/dl)</label><input id="bloodValue" type="number" min="0" max="50" step="0.1" placeholder="z. B. 8,5"></div></div>
+    <button id="saveBlood" style="margin-top:10px;width:100%">Blutwert speichern</button>
+    <p class="subtle" style="margin-top:8px">Der bekannte Ausgangswert von 8,5 mg/dl ist vorgemerkt. Bitte trage das tatsächliche Datum der Blutuntersuchung nach, damit er im zeitlichen Diagramm korrekt eingeordnet werden kann.</p>
+  </div>
+  <div class="card"><h2>Monats- und Jahresübersicht</h2><p class="subtle">Die Auswertung orientiert sich am ausgewählten Tag. Ernährungsmittelwerte berücksichtigen nur dokumentierte Tage; Gewicht und Laborwerte zeigen die erste und letzte Messung im Zeitraum.</p><div id="longTermReports"></div></div>
+  <div class="card"><h2>Ernährungsverlauf</h2><p class="subtle">Tageswerte aus tatsächlich erfassten Einträgen. Tage ohne Einträge werden nicht als 0 mg gerechnet.</p>
+    <label for="dietTrendRange">Zeitraum</label><select id="dietTrendRange"><option value="30">Letzte 30 Tage</option><option value="90">Letzte 90 Tage</option><option value="all">Gesamter Verlauf</option></select>
+    <div class="metrics" style="margin-top:10px"><div class="metric"><span>Ø Harnsäure-Äquivalent / dokumentierter Tag</span><strong id="dietAvgUA">–</strong><span id="dietDaysUA">Noch keine Daten</span></div><div class="metric"><span>Ø Purin / dokumentierter Tag</span><strong id="dietAvgPurine">–</strong><span id="dietDaysPurine">Noch keine Daten</span></div></div>
+    <svg id="dietChart" class="chart" viewBox="0 0 640 220" role="img" aria-label="Ernährungsverlauf Harnsäure-Äquivalent pro dokumentiertem Tag" style="margin-top:10px"></svg>
+    <p class="subtle">Der Ernährungsverlauf beschreibt nur die protokollierte Nahrungsaufnahme. Er ist keine Vorhersage und kein direkter Vergleich mit dem Harnsäure-Laborwert.</p>
+  </div>
+  <div class="card"><div class="metric"><span>Ernährung am ausgewählten Tag</span><strong id="progressToday">0 mg</strong><span>Harnsäure-Äquivalent</span></div></div>
+</section>
+
+<section id="view-settings" class="hidden">
+  <div class="card"><h2>Daten und Status</h2><p id="dbInfo" class="subtle">Import wird geladen …</p>
+    <div class="row"><button id="exportBackup">Vollständiges Backup exportieren</button><button id="clearEntries" class="danger">Tagesdaten löschen</button></div>
+    <p class="subtle">Das Backup enthält Tagesprotokolle, Rezepte, Rezeptzutaten, Gewicht, Blutwerte und Favoriten. Die Lebensmittel-Stammdaten bleiben Bestandteil der App und werden beim Wiederherstellen nicht verändert.</p>
+    <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+    <h3>Backup wiederherstellen</h3>
+    <p class="subtle">Eine ausgewählte Sicherung ersetzt nach Prüfung und deiner Bestätigung sämtliche persönlichen Daten auf diesem Gerät. Vorher wird automatisch eine Sicherheitskopie heruntergeladen.</p>
+    <input id="backupFile" type="file" accept=".json,application/json" class="hidden">
+    <button id="chooseBackup" class="secondary" style="width:100%">Backup-Datei auswählen und wiederherstellen</button>
+    <p id="backupStatus" class="subtle" role="status" aria-live="polite">Unterstützt Backups im Format v2 bis v6.</p>
+    <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+    <h3>Offline-Status</h3><p id="storageInfo" class="subtle">Lokale Speicherung wird geprüft …</p>
+    <div class="note">Wichtig: Bewahre exportierte Backups zusätzlich außerhalb des Geräts auf. Browserdaten allein sind keine Datensicherung.</div>
+  </div>
+</section>
+<footer>PurineTracker · Prototyp v0.10 mit Importdaten v1.6 · noch keine medizinische Bewertung</footer>
+</main>
+<nav>
+  <button class="active" data-view="today">⌂<br>Heute</button>
+  <button data-view="food">＋<br>Hinzufügen</button>
+  <button data-view="recipes">▤<br>Rezepte</button>
+  <button data-view="progress">↗<br>Fortschritt</button>
+  <button data-view="settings">⚙<br>Daten</button>
+</nav>
+<script>
+const DB_NAME='PurineTrackerLocal', DB_VERSION=4, STORE='entries', DAY_STATUS_STORE='dayStatuses', FAVORITES_KEY='pt_favorites_v1', INITIALIZED_KEY='pt_initialized_v1', LAST_MEAL_KEY='pt_last_meal_v1';
+const WEIGHT_STORE='weights', BLOOD_STORE='blood', RECIPE_STORE='recipes', RECIPE_INGREDIENT_STORE='recipeIngredients';
+let weights=[], bloodTests=[], recipes=[], recipeIngredients=[], recipeDraft=[], recipeSelectedFood=null, dayStatuses=[], calendarMonth=localDate().slice(0,7);
+let db=null, foods=[], sources=[], selected=null, entries=[], favorites=new Set(), selectedDay=localDate();
+const $=id=>document.getElementById(id);
+function localDate(d=new Date()){const z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)}
+function fmt(n){return new Intl.NumberFormat('de-DE',{maximumFractionDigits:1}).format(Number(n)||0)}
+function mg(n){return fmt(n)+' mg'}
+function safeText(s){return String(s??'')}
+function showView(name){document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));$('view-'+name).classList.remove('hidden');document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===name));if(name==='food')renderFoods();if(name==='today')renderToday();if(name==='progress')renderProgress();if(name==='recipes')renderRecipes()}
+document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
+$('quickFood').addEventListener('click',()=>showView('food'));
+$('quickRecipe').addEventListener('click',()=>showView('recipes'));
+$('dayPicker').value=selectedDay;
+try{$('meal').value=localStorage.getItem(LAST_MEAL_KEY)||'Frühstück'}catch{}
+$('meal').addEventListener('change',()=>{try{localStorage.setItem(LAST_MEAL_KEY,$('meal').value)}catch{}});
+$('dayPicker').addEventListener('change',()=>{selectedDay=$('dayPicker').value||localDate();calendarMonth=selectedDay.slice(0,7);renderToday()});
+$('calendarPrev').addEventListener('click',()=>{const d=new Date(calendarMonth+'-15T12:00:00');d.setMonth(d.getMonth()-1);calendarMonth=localDate(d).slice(0,7);renderCalendar()});
+$('calendarNext').addEventListener('click',()=>{const d=new Date(calendarMonth+'-15T12:00:00');d.setMonth(d.getMonth()+1);calendarMonth=localDate(d).slice(0,7);renderCalendar()});
+function setOnline(){const on=navigator.onLine;$('onlineState').textContent=on?'Offlinefähig · lokal':'Offline · lokal';$('onlineState').className='status';}
+window.addEventListener('online',setOnline);window.addEventListener('offline',setOnline);
+function loadFavorites(){try{favorites=new Set(JSON.parse(localStorage.getItem(FAVORITES_KEY)||'[]'))}catch{favorites=new Set()}}
+function saveFavorites(){localStorage.setItem(FAVORITES_KEY,JSON.stringify([...favorites]))}
+function openDB(){
+ return new Promise((resolve,reject)=>{
+  if(!('indexedDB' in window)){reject(new Error('IndexedDB nicht verfügbar'));return}
+  const req=indexedDB.open(DB_NAME,DB_VERSION);
+  req.onupgradeneeded=()=>{const d=req.result;if(!d.objectStoreNames.contains(STORE)){const s=d.createObjectStore(STORE,{keyPath:'id'});s.createIndex('date','date',{unique:false})}if(!d.objectStoreNames.contains(WEIGHT_STORE)){const s=d.createObjectStore(WEIGHT_STORE,{keyPath:'id'});s.createIndex('date','date',{unique:false})}if(!d.objectStoreNames.contains(BLOOD_STORE)){const s=d.createObjectStore(BLOOD_STORE,{keyPath:'id'});s.createIndex('date','date',{unique:false})}if(!d.objectStoreNames.contains(RECIPE_STORE)){const s=d.createObjectStore(RECIPE_STORE,{keyPath:'id'});s.createIndex('name','name',{unique:false})}if(!d.objectStoreNames.contains(RECIPE_INGREDIENT_STORE)){const s=d.createObjectStore(RECIPE_INGREDIENT_STORE,{keyPath:'id'});s.createIndex('recipe_id','recipe_id',{unique:false})}if(!d.objectStoreNames.contains(DAY_STATUS_STORE)){const s=d.createObjectStore(DAY_STATUS_STORE,{keyPath:'id'});s.createIndex('date','date',{unique:true})}};
+  req.onsuccess=()=>{db=req.result;resolve(db)};req.onerror=()=>reject(req.error);
+ });
+}
+function getAllEntries(){return new Promise((resolve,reject)=>{const r=db.transaction(STORE,'readonly').objectStore(STORE).getAll();r.onsuccess=()=>resolve(r.result||[]);r.onerror=()=>reject(r.error)})}
+function putEntry(e){return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(e);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Speichern abgebrochen'))})}
+function deleteEntry(id){return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})}
+function getAllFrom(store){return new Promise((resolve,reject)=>{const r=db.transaction(store,'readonly').objectStore(store).getAll();r.onsuccess=()=>resolve(r.result||[]);r.onerror=()=>reject(r.error)})}
+function putRecord(store,record){return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readwrite');tx.objectStore(store).put(record);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Speichern abgebrochen'))})}
+function putDayStatus(date,status){return new Promise((resolve,reject)=>{const tx=db.transaction(DAY_STATUS_STORE,'readwrite');if(status==='closed')tx.objectStore(DAY_STATUS_STORE).put({id:date,date,status:'closed',updated_at:new Date().toISOString()});else tx.objectStore(DAY_STATUS_STORE).delete(date);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Status konnte nicht gespeichert werden'))})}
+async function refreshDayStatusAfterEntryChange(date){if(!date)return;const hasEntries=entries.some(e=>e.date===date);await putDayStatus(date,hasEntries?'open':'none');dayStatuses=await getAllFrom(DAY_STATUS_STORE)}
+function isDayClosed(date){return dayStatuses.some(x=>x.date===date&&x.status==='closed')}
+async function toggleSelectedDayStatus(){const hasEntries=entries.some(e=>e.date===selectedDay);if(!hasEntries){alert('Für diesen Tag gibt es noch keine Einträge.');return}const closing=!isDayClosed(selectedDay);await putDayStatus(selectedDay,closing?'closed':'open');dayStatuses=await getAllFrom(DAY_STATUS_STORE);renderToday()}
+function deleteRecord(store,id){return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readwrite');tx.objectStore(store).delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})}
+function recordId(){return crypto.randomUUID?crypto.randomUUID():'R'+Date.now()+Math.random().toString(16).slice(2)}
+function dateLabel(s){return s?new Date(s+'T12:00:00').toLocaleDateString('de-DE'):'Datum fehlt'}
+function drawChart(svgId,records,valueKey,unit,emptyText){
+ const svg=$(svgId);svg.replaceChildren();const ns='http://www.w3.org/2000/svg';
+ const el=(tag,attrs,text)=>{const n=document.createElementNS(ns,tag);Object.entries(attrs||{}).forEach(([k,v])=>n.setAttribute(k,v));if(text!==undefined)n.textContent=text;svg.append(n);return n};
+ const data=records.filter(r=>r.date&&Number.isFinite(Number(r[valueKey]))).sort((a,b)=>a.date.localeCompare(b.date));
+ if(!data.length){el('text',{x:320,y:110,'text-anchor':'middle'},emptyText);return}
+ const vals=data.map(r=>Number(r[valueKey])),min=Math.min(...vals),max=Math.max(...vals),pad=Math.max((max-min)*.2,unit==='kg'?.5:.2),lo=Math.max(0,min-pad),hi=max+pad;
+ const x0=58,x1=615,y0=22,y1=174;
+ for(let i=0;i<4;i++){const y=y0+(y1-y0)*i/3;el('line',{x1:x0,y1:y,x2:x1,y2:y,class:'gridline'});el('text',{x:48,y:y+4,'text-anchor':'end'},fmt(hi-(hi-lo)*i/3))}
+ const first=new Date(data[0].date+'T00:00:00'),last=new Date(data[data.length-1].date+'T00:00:00'),span=Math.max(1,(last-first)/86400000);
+ const points=data.map(r=>({x:data.length===1?(x0+x1)/2:x0+(x1-x0)*((new Date(r.date+'T00:00:00')-first)/86400000)/span,y:y1-(Number(r[valueKey])-lo)/(hi-lo||1)*(y1-y0),r}));
+ if(points.length>1)el('polyline',{points:points.map(p=>p.x+','+p.y).join(' '),class:'line'});
+ points.forEach(p=>{el('circle',{cx:p.x,cy:p.y,r:5,class:'dot'});el('title',{},dateLabel(p.r.date)+': '+fmt(p.r[valueKey])+' '+unit)});
+ if(points.length===1)el('text',{x:320,y:202,'text-anchor':'middle'},'Bisher nur eine Messung – noch kein Verlauf.');
+ else {el('text',{x:x0,y:202},dateLabel(data[0].date));el('text',{x:x1,y:202,'text-anchor':'end'},dateLabel(data[data.length-1].date));}
+}
+function renderRecords(target,records,store,valueKey,unit){
+ const box=$(target);box.replaceChildren();const sorted=[...records].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+ if(!sorted.length){box.textContent='Noch keine Messwerte erfasst.';box.className='recordlist subtle';return}box.className='recordlist';
+ for(const r of sorted){
+  const row=document.createElement('div');row.className='record';const info=document.createElement('div');const strong=document.createElement('strong');strong.textContent=fmt(r[valueKey])+' '+unit;const small=document.createElement('small');small.textContent=r.date?dateLabel(r.date):'Datum noch nicht hinterlegt';info.append(strong,small);
+  const actions=document.createElement('div');actions.style.cssText='display:flex;gap:7px;flex-wrap:wrap';
+  const edit=document.createElement('button');edit.className='secondary';edit.textContent='Bearbeiten';
+  edit.addEventListener('click',()=>{
+   row.replaceChildren();row.style.display='block';const form=document.createElement('div');form.className='row';
+   const dateWrap=document.createElement('div'),valueWrap=document.createElement('div');const dl=document.createElement('label');dl.textContent='Messdatum';const date=document.createElement('input');date.type='date';date.value=r.date||'';dl.append(date);dateWrap.append(dl);
+   const vl=document.createElement('label');vl.textContent=store===WEIGHT_STORE?'Gewicht (kg)':'Harnsäure (mg/dl)';const value=document.createElement('input');value.type='number';value.min='0.1';value.step='0.1';value.value=r[valueKey];vl.append(value);valueWrap.append(vl);form.append(dateWrap,valueWrap);
+   const save=document.createElement('button');save.textContent='Änderungen speichern';save.style.marginTop='8px';const cancel=document.createElement('button');cancel.className='secondary';cancel.textContent='Abbrechen';cancel.style.margin='8px 0 0 7px';
+   save.addEventListener('click',async()=>{const v=Number(value.value);const max=store===WEIGHT_STORE?500:50;if(!date.value||!Number.isFinite(v)||v<=0||v>max){alert('Bitte ein gültiges Datum und einen gültigen Messwert eingeben.');return}const updated={...r,date:date.value,[valueKey]:v,updated_at:new Date().toISOString()};await putRecord(store,updated);if(store===WEIGHT_STORE)weights=await getAllFrom(WEIGHT_STORE);else bloodTests=await getAllFrom(BLOOD_STORE);renderProgress();});
+   cancel.addEventListener('click',renderProgress);row.append(form,save,cancel);
+  });
+  const del=document.createElement('button');del.className='danger';del.textContent='Löschen';del.addEventListener('click',async()=>{if(!confirm('Diesen Messwert löschen?'))return;await deleteRecord(store,r.id);if(store===WEIGHT_STORE)weights=await getAllFrom(WEIGHT_STORE);else bloodTests=await getAllFrom(BLOOD_STORE);renderProgress()});
+  actions.append(edit,del);row.append(info,actions);box.append(row);
+ }
+}
+function drawDietChart(records){
+ const svg=$('dietChart');svg.replaceChildren();const ns='http://www.w3.org/2000/svg';
+ const el=(tag,attrs,text)=>{const n=document.createElementNS(ns,tag);Object.entries(attrs||{}).forEach(([k,v])=>n.setAttribute(k,v));if(text!==undefined)n.textContent=text;svg.append(n);return n};
+ if(!records.length){el('text',{x:320,y:110,'text-anchor':'middle'},'Noch keine dokumentierten Ernährungstage im Zeitraum');return}
+ const vals=records.map(r=>r.ua),max=Math.max(...vals),hi=Math.max(10,Math.ceil(max/10)*10),lo=0,x0=58,x1=615,y0=22,y1=174;
+ for(let i=0;i<4;i++){const y=y0+(y1-y0)*i/3;el('line',{x1:x0,y1:y,x2:x1,y2:y,class:'gridline'});el('text',{x:48,y:y+4,'text-anchor':'end'},fmt(hi-(hi-lo)*i/3)+' mg')}
+ const first=new Date(records[0].date+'T00:00:00'),last=new Date(records[records.length-1].date+'T00:00:00'),span=Math.max(1,(last-first)/86400000);
+ const pts=records.map(r=>({x:records.length===1?(x0+x1)/2:x0+(x1-x0)*((new Date(r.date+'T00:00:00')-first)/86400000)/span,y:y1-(r.ua/hi)*(y1-y0),r}));
+ // Nur direkt aufeinanderfolgende dokumentierte Kalendertage verbinden. Fehlende Tage bleiben sichtbare Lücken.
+ for(let i=1;i<pts.length;i++){const gap=(new Date(pts[i].r.date+'T00:00:00')-new Date(pts[i-1].r.date+'T00:00:00'))/86400000;if(gap===1)el('line',{x1:pts[i-1].x,y1:pts[i-1].y,x2:pts[i].x,y2:pts[i].y,class:'line'});}
+ pts.forEach(p=>{el('circle',{cx:p.x,cy:p.y,r:5,class:'dot'});el('title',{},dateLabel(p.r.date)+': '+fmt(p.r.ua)+' mg Harnsäure-Äquivalent; '+fmt(p.r.purin)+' mg Purin')});
+ if(pts.length===1)el('text',{x:320,y:202,'text-anchor':'middle'},'Bisher nur ein dokumentierter Tag.');
+ else {el('text',{x:x0,y:202},dateLabel(records[0].date));el('text',{x:x1,y:202,'text-anchor':'end'},dateLabel(records[records.length-1].date));}
+}
+function renderDietTrend(){
+ const byDate=new Map();for(const e of entries){if(!e.date)continue;const x=byDate.get(e.date)||{date:e.date,ua:0,purin:0,count:0};x.ua+=Number(e.uric_acid_equivalent_mg)||0;x.purin+=Number(e.purine_mg)||0;x.count++;byDate.set(e.date,x)}
+ let rows=[...byDate.values()].sort((a,b)=>a.date.localeCompare(b.date));const range=$('dietTrendRange')?.value||'30';
+ if(range!=='all'&&rows.length){const end=selectedDay||rows[rows.length-1].date,days=Number(range),start=addDays(end,-(days-1));rows=rows.filter(r=>r.date>=start&&r.date<=end)}
+ const n=rows.length,ua=rows.reduce((a,r)=>a+r.ua,0),purin=rows.reduce((a,r)=>a+r.purin,0);
+ $('dietAvgUA').textContent=n?fmt(ua/n)+' mg':'–';$('dietAvgPurine').textContent=n?fmt(purin/n)+' mg':'–';
+ $('dietDaysUA').textContent=n?n+' dokumentierte '+(n===1?'Tag':'Tage'):'Noch keine Daten';$('dietDaysPurine').textContent=n?n+' dokumentierte '+(n===1?'Tag':'Tage'):'Noch keine Daten';
+ drawDietChart(rows);
+}
+function renderLongTermReports(){
+ const ref=selectedDay||localDate(),year=Number(ref.slice(0,4)),month=Number(ref.slice(5,7));
+ const monthStart=`${year}-${String(month).padStart(2,'0')}-01`,monthEnd=`${year}-${String(month).padStart(2,'0')}-${String(new Date(year,month,0).getDate()).padStart(2,'0')}`;
+ const yearStart=`${year}-01-01`,yearEnd=`${year}-12-31`;
+ const allDaily=new Map();
+ for(const e of entries){if(!e.date)continue;const d=allDaily.get(e.date)||{date:e.date,ua:0,purin:0};d.ua+=Number(e.uric_acid_equivalent_mg)||0;d.purin+=Number(e.purine_mg)||0;allDaily.set(e.date,d)}
+ const daily=[...allDaily.values()];
+ const inRange=(r,a,z)=>r.date&&r.date>=a&&r.date<=z;
+ const dietSummary=(a,z)=>{const rows=daily.filter(r=>r.date>=a&&r.date<=z);if(!rows.length)return 'Keine dokumentierten Tage';const ua=rows.reduce((x,r)=>x+r.ua,0)/rows.length,p=rows.reduce((x,r)=>x+r.purin,0)/rows.length;return `${fmt(ua)} mg Harnsäure-Äquivalent/Tag · ${fmt(p)} mg Purin/Tag · ${rows.length} dokumentierte ${rows.length===1?'Tag':'Tage'}`};
+ const measureSummary=(rows,key,unit,a,z)=>{const x=rows.filter(r=>inRange(r,a,z)).sort((m,n)=>m.date.localeCompare(n.date));if(!x.length)return 'Keine Messung im Zeitraum';if(x.length===1)return `${fmt(x[0][key])} ${unit} · 1 Messung (${dateLabel(x[0].date)})`;const first=x[0],last=x[x.length-1],delta=last[key]-first[key],sign=delta>0?'+':'';return `${fmt(first[key])} → ${fmt(last[key])} ${unit} · ${sign}${fmt(delta)} ${unit} · ${x.length} Messungen`;};
+ const mk=(title,a,z)=>{const box=document.createElement('div');box.className='metric';const h=document.createElement('strong');h.textContent=title;h.style.fontSize='1rem';const p=document.createElement('span');p.textContent='Ernährung: '+dietSummary(a,z);p.style.marginTop='6px';const w=document.createElement('span');w.textContent='Gewicht: '+measureSummary(weights,'kg','kg',a,z);w.style.marginTop='5px';const b=document.createElement('span');b.textContent='Blut-Harnsäure: '+measureSummary(bloodTests.filter(r=>r.date),'mg_dl','mg/dl',a,z);b.style.marginTop='5px';box.append(h,p,w,b);return box};
+ const wrap=document.createElement('div');wrap.className='period-grid';wrap.append(mk(new Date(year,month-1,1).toLocaleDateString('de-DE',{month:'long',year:'numeric'}),monthStart,monthEnd),mk(String(year),yearStart,yearEnd));
+ const host=$('longTermReports');host.replaceChildren(wrap);
+}
+function renderProgress(){
+ const w=[...weights].filter(r=>r.date).sort((a,b)=>a.date.localeCompare(b.date)),b=[...bloodTests].filter(r=>r.date).sort((a,b)=>a.date.localeCompare(b.date));
+ const lastW=w.at(-1),lastB=b.at(-1),baselineB=bloodTests.find(r=>r.baseline&&!r.date);
+ $('latestWeight').textContent=lastW?fmt(lastW.kg)+' kg':'–';$('weightDateLabel').textContent=lastW?'Messung · '+dateLabel(lastW.date):'Noch keine Messung';
+ $('latestBlood').textContent=lastB?fmt(lastB.mg_dl)+' mg/dl':(baselineB?fmt(baselineB.mg_dl)+' mg/dl':'–');$('bloodDateLabel').textContent=lastB?'Labor · '+dateLabel(lastB.date):(baselineB?'Ausgangswert · Datum fehlt':'Noch kein Laborwert');
+ drawChart('weightChart',weights,'kg','kg','Noch keine datierten Gewichtsmessungen');drawChart('bloodChart',bloodTests,'mg_dl','mg/dl','Noch keine datierten Laborwerte');renderDietTrend();
+ renderRecords('weightRecords',weights,WEIGHT_STORE,'kg','kg');renderRecords('bloodRecords',bloodTests,BLOOD_STORE,'mg_dl','mg/dl');renderLongTermReports();
+}
+$('dietTrendRange').addEventListener('change',renderDietTrend);
+$('saveWeight').addEventListener('click',async()=>{const date=$('weightDate').value,v=Number($('weightValue').value);if(!date||!Number.isFinite(v)||v<=0||v>500){alert('Bitte ein gültiges Datum und Gewicht eingeben.');return}await putRecord(WEIGHT_STORE,{id:recordId(),date,kg:v,created_at:new Date().toISOString()});weights=await getAllFrom(WEIGHT_STORE);$('weightDate').value='';$('weightValue').value='';renderProgress();alert('Gewicht lokal gespeichert. Das Eingabeformular wurde zurückgesetzt.')});
+$('saveBlood').addEventListener('click',async()=>{const date=$('bloodDate').value,v=Number($('bloodValue').value);if(!date||!Number.isFinite(v)||v<=0||v>50){alert('Bitte ein gültiges Messdatum und einen Harnsäurewert eingeben.');return}await putRecord(BLOOD_STORE,{id:recordId(),date,mg_dl:v,created_at:new Date().toISOString()});bloodTests=await getAllFrom(BLOOD_STORE);$('bloodDate').value='';$('bloodValue').value='';renderProgress();alert('Laborwert lokal gespeichert. Das Eingabeformular wurde zurückgesetzt.')});
+
+function recipeTotals(list){return list.reduce((a,x)=>({purine:a.purine+(Number(x.purine_mg)||0),ua:a.ua+(Number(x.uric_acid_equivalent_mg)||0)}),{purine:0,ua:0})}
+function updateRecipeDraft(){
+ const totals=recipeTotals(recipeDraft),finished=Number($('recipeFinishedWeight').value);
+ $('recipeDraftPurin').textContent=mg(totals.purine);$('recipeDraftUA').textContent=mg(totals.ua);
+ $('recipePer100Purin').textContent=finished>0?mg(totals.purine/finished*100):'–';$('recipePer100UA').textContent=finished>0?mg(totals.ua/finished*100):'–';
+ $('saveRecipe').disabled=!$('recipeName').value.trim()||!recipeDraft.length||!Number.isFinite(finished)||finished<=0;
+ const box=$('recipeDraftIngredients');box.replaceChildren();
+ if(!recipeDraft.length){box.textContent='Noch keine Zutaten hinzugefügt.';box.className='subtle';return}box.className='';
+ recipeDraft.forEach((x,i)=>{const row=document.createElement('div');row.className='ingredient-row';const name=document.createElement('div');name.innerHTML='';const strong=document.createElement('strong');strong.textContent=x.food_name;const small=document.createElement('small');small.className='subtle';small.textContent=fmt(x.quantity_g)+' g · '+mg(x.purine_mg)+' Purin';name.append(strong,small);const amount=document.createElement('span');amount.textContent=fmt(x.quantity_g)+' g';const del=document.createElement('button');del.className='danger';del.textContent='×';del.setAttribute('aria-label','Zutat entfernen');del.addEventListener('click',()=>{recipeDraft.splice(i,1);updateRecipeDraft()});row.append(name,amount,del);box.append(row)});
+}
+function renderRecipeFoodResults(){
+ const q=$('recipeFoodSearch').value.trim().toLocaleLowerCase('de-DE'),box=$('recipeFoodResults');box.replaceChildren();if(!q){box.textContent='Gib einen Suchbegriff ein, um Zutaten aus der Datenbank auszuwählen.';box.className='subtle';return}
+ const matches=foods.filter(f=>(f.name||'').toLocaleLowerCase('de-DE').includes(q)||(f.category||'').toLocaleLowerCase('de-DE').includes(q)).sort((a,b)=>a.name.localeCompare(b.name,'de')).slice(0,30);box.className='foodlist';
+ if(!matches.length){box.textContent='Keine passenden Lebensmittel gefunden.';return}
+ matches.forEach(f=>{const b=document.createElement('button');b.className='fooditem';const t=document.createElement('span');t.className='foodtext';const st=document.createElement('strong');st.textContent=f.name;const sm=document.createElement('small');sm.textContent=(f.category||'')+' · '+fmt(f.app_purine_mg_100g)+' mg Purin/100 g';t.append(st,sm);b.append(t);b.addEventListener('click',()=>{recipeSelectedFood=f;$('recipeSelectedFood').textContent=f.name;$('recipeSelectedMeta').textContent='ID '+f.id+' · '+(f.category||'');$('recipeIngredientGrams').value='100';$('recipeIngredientEditor').classList.remove('hidden')});box.append(b)});
+}
+$('recipeFoodSearch').addEventListener('input',renderRecipeFoodResults);
+$('recipeFinishedWeight').addEventListener('input',updateRecipeDraft);$('recipeName').addEventListener('input',updateRecipeDraft);
+$('addRecipeIngredient').addEventListener('click',()=>{
+ if(!recipeSelectedFood)return;const g=Number($('recipeIngredientGrams').value);if(!Number.isFinite(g)||g<=0){alert('Bitte eine Zutatenmenge größer 0 eingeben.');return}
+ const f=recipeSelectedFood;recipeDraft.push({id:recordId(),food_id:f.id,food_name:f.name,quantity_g:g,purine_mg:(Number(f.app_purine_mg_100g)||0)*g/100,uric_acid_equivalent_mg:(Number(f.app_uric_acid_equivalent_mg_100g)||0)*g/100});recipeSelectedFood=null;$('recipeIngredientEditor').classList.add('hidden');$('recipeFoodSearch').value='';renderRecipeFoodResults();updateRecipeDraft();
+});
+$('saveRecipe').addEventListener('click',async()=>{
+ const name=$('recipeName').value.trim(),finished=Number($('recipeFinishedWeight').value),totals=recipeTotals(recipeDraft);
+ if(!name||!recipeDraft.length||!Number.isFinite(finished)||finished<=0){alert('Bitte Rezeptname, mindestens eine Zutat und ein gültiges Fertiggewicht angeben.');return}
+ const id=recordId(),recipe={id,name,finished_weight_g:finished,total_purine_mg:totals.purine,total_uric_acid_equivalent_mg:totals.ua,purine_mg_100g:totals.purine/finished*100,uric_acid_equivalent_mg_100g:totals.ua/finished*100,created_at:new Date().toISOString()};
+ const ingredients=recipeDraft.map(x=>({...x,id:recordId(),recipe_id:id}));
+ try{const tx=db.transaction([RECIPE_STORE,RECIPE_INGREDIENT_STORE],'readwrite');tx.objectStore(RECIPE_STORE).put(recipe);ingredients.forEach(x=>tx.objectStore(RECIPE_INGREDIENT_STORE).put(x));await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Speichern abgebrochen'))});recipes=await getAllFrom(RECIPE_STORE);recipeIngredients=await getAllFrom(RECIPE_INGREDIENT_STORE);recipeDraft=[];$('recipeName').value='';$('recipeFinishedWeight').value='';updateRecipeDraft();renderRecipes();alert('Rezept lokal gespeichert.');}
+ catch(err){alert('Rezept konnte nicht gespeichert werden: '+err.message)}
+});
+async function deleteRecipe(id){if(!confirm('Rezept und alle zugehörigen Zutaten löschen?'))return;const tx=db.transaction([RECIPE_STORE,RECIPE_INGREDIENT_STORE],'readwrite');tx.objectStore(RECIPE_STORE).delete(id);recipeIngredients.filter(x=>x.recipe_id===id).forEach(x=>tx.objectStore(RECIPE_INGREDIENT_STORE).delete(x.id));await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});recipes=await getAllFrom(RECIPE_STORE);recipeIngredients=await getAllFrom(RECIPE_INGREDIENT_STORE);renderRecipes()}
+function renderRecipes(){
+ const box=$('recipeList');box.replaceChildren();if(!recipes.length){box.textContent='Noch keine Rezepte angelegt.';box.className='subtle'}else{box.className='';[...recipes].sort((a,b)=>a.name.localeCompare(b.name,'de')).forEach(r=>{const card=document.createElement('div');card.className='recipe-card';const h=document.createElement('h3');h.textContent=r.name;const p=document.createElement('p');p.className='subtle';p.textContent='Fertiggewicht '+fmt(r.finished_weight_g)+' g · '+fmt(r.purine_mg_100g)+' mg Purin/100 g · '+fmt(r.uric_acid_equivalent_mg_100g)+' mg Harnsäure-Äquivalent/100 g';const ing=document.createElement('p');ing.className='subtle';ing.textContent=recipeIngredients.filter(x=>x.recipe_id===r.id).map(x=>x.food_name+' ('+fmt(x.quantity_g)+' g)').join(', ');const actions=document.createElement('div');actions.className='recipe-actions';const portion=document.createElement('input');portion.type='number';portion.min='0.1';portion.step='1';portion.placeholder='Portion g';portion.setAttribute('aria-label','Portionsgröße in Gramm');const meal=document.createElement('select');['Frühstück','Mittagessen','Abendessen','Snack','Getränk'].forEach(m=>{const o=document.createElement('option');o.textContent=m;meal.append(o)});const add=document.createElement('button');add.textContent='Portion eintragen';add.addEventListener('click',async()=>{const g=Number(portion.value);if(!Number.isFinite(g)||g<=0){alert('Bitte eine Portionsgröße größer 0 eingeben.');return}const e={id:recordId(),date:selectedDay,meal:meal.value,entry_type:'recipe',reference_id:r.id,food_name:r.name,quantity_g:g,purine_mg:r.purine_mg_100g*g/100,uric_acid_equivalent_mg:r.uric_acid_equivalent_mg_100g*g/100,created_at:new Date().toISOString()};await putEntry(e);entries=await getAllEntries();await refreshDayStatusAfterEntryChange(e.date);showView('today');alert('Rezeptportion lokal ins Tagesprotokoll übernommen.')});const del=document.createElement('button');del.className='danger';del.textContent='Rezept löschen';del.addEventListener('click',()=>deleteRecipe(r.id));actions.append(portion,meal,add,del);card.append(h,p,ing,actions);box.append(card)})}
+}
+
+async function loadImport(){
+ const r=await fetch('./PurineTracker_Import_v1.json',{cache:'no-store'});
+ if(!r.ok)throw new Error('Importdatei nicht gefunden (HTTP '+r.status+')');
+ const d=await r.json();
+ if(d.format!=='purinetracker-import'||d.version!==1||!Array.isArray(d.foods))throw new Error('Importdatei hat ein unbekanntes Format.');
+ const ids=new Set();
+ for(const f of d.foods){if(!f.id||!f.name||ids.has(f.id))throw new Error('Lebensmittel-ID fehlt oder ist doppelt: '+(f.id||'(leer)'));ids.add(f.id)}
+ foods=d.foods; sources=d.sources||[];
+ $('dbInfo').textContent=`Import v${d.version} · Datenbank ${d.database_version} · ${foods.length} Lebensmittel · ${d.bls_masterdata?.length||0} BLS-Stammdatensätze · ${sources.length} Quellen.`;
+}
+function recentFoodIds(){
+ const ids=[],seen=new Set();
+ [...entries].sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||'')).forEach(e=>{if(e.entry_type!=='food'||!e.reference_id||seen.has(e.reference_id))return;seen.add(e.reference_id);ids.push(e.reference_id)});
+ return ids;
+}
+function appendFoodSection(box,title,list){
+ if(!list.length)return;
+ const heading=document.createElement('div');heading.className='food-section-title';heading.textContent=title;box.append(heading);
+ list.forEach(f=>{
+  const b=document.createElement('button');b.className='fooditem'+(selected?.id===f.id?' active':'');b.type='button';
+  const left=document.createElement('span');left.className='foodtext';const strong=document.createElement('strong');strong.textContent=f.name;const small=document.createElement('small');small.textContent=[f.category,f.state].filter(Boolean).join(' · ');left.append(strong,small);
+  const val=document.createElement('small');val.textContent=mg(f.app_uric_acid_equivalent_mg_100g)+'/100 g*';const star=document.createElement('span');star.className='star';star.textContent=favorites.has(f.id)?'★':'☆';b.append(left,val,star);b.addEventListener('click',()=>selectFood(f));box.append(b);
+ });
+}
+function renderFoods(){
+ const q=$('foodSearch').value.trim().toLocaleLowerCase('de-DE'), only=$('favoritesOnly').checked,box=$('foodList');box.replaceChildren();
+ const matches=foods.filter(f=>(!only||favorites.has(f.id))&&(!q||(f.name||'').toLocaleLowerCase('de-DE').includes(q)||(f.category||'').toLocaleLowerCase('de-DE').includes(q)||(f.state||'').toLocaleLowerCase('de-DE').includes(q)));
+ matches.sort((a,b)=>Number(favorites.has(b.id))-Number(favorites.has(a.id))||a.name.localeCompare(b.name,'de'));
+ $('foodCount').textContent=q||only?matches.length+' Treffer':foods.length+' Lebensmittel';
+ if(!q&&!only){
+  const favs=foods.filter(f=>favorites.has(f.id)).sort((a,b)=>a.name.localeCompare(b.name,'de'));
+  const recentIds=recentFoodIds().filter(id=>!favorites.has(id));const recent=recentIds.map(id=>foods.find(f=>f.id===id)).filter(Boolean).slice(0,8);
+  appendFoodSection(box,'★ Meine Favoriten',favs);
+  appendFoodSection(box,'Zuletzt verwendet',recent);
+  if(!favs.length&&!recent.length){const hint=document.createElement('div');hint.className='food-hint subtle';hint.textContent='Deine Favoriten und zuletzt verwendeten Lebensmittel erscheinen hier. Nutze die Suche, um aus allen '+foods.length+' Lebensmitteln auszuwählen.';box.append(hint)}
+  else {const hint=document.createElement('div');hint.className='food-hint subtle';hint.textContent='Über die Suche findest du alle '+foods.length+' Lebensmittel aus der Datenbank.';box.append(hint)}
+  return;
+ }
+ const shown=matches.slice(0,100);appendFoodSection(box,'Suchergebnisse',shown);
+ if(matches.length>100){const p=document.createElement('p');p.className='subtle';p.textContent='Es werden die ersten 100 Treffer angezeigt. Bitte Suche verfeinern.';box.append(p)}
+ if(!matches.length){const p=document.createElement('p');p.className='subtle';p.textContent='Keine passenden Lebensmittel gefunden.';box.append(p)}
+}
+function selectFood(f){selected=f;$('foodDetails').classList.remove('hidden');$('selectedName').textContent=f.name;$('selectedMeta').textContent=[f.category,f.state,'ID '+f.id].filter(Boolean).join(' · ');$('grams').value='100';$('toggleFavorite').textContent=favorites.has(f.id)?'★ Favorit':'☆ Favorit';$('measuredUA').textContent=f.measured_uric_acid_mg_100g!=null?'Separat hinterlegter analytischer Harnsäurewert: '+mg(f.measured_uric_acid_mg_100g)+'/100 g. Nicht mit dem Harnsäure-Äquivalent verwechseln.':'';updatePreview();renderFoods();$('grams').focus({preventScroll:true})}
+function updatePreview(){if(!selected)return;const raw=$('grams').value, g=Number(raw);const valid=raw.trim()!==''&&Number.isFinite(g)&&g>=0;const p=valid?(Number(selected.app_purine_mg_100g)||0)*g/100:0;const u=valid?(Number(selected.app_uric_acid_equivalent_mg_100g)||0)*g/100:0;$('previewPurin').textContent=mg(p);$('previewUA').textContent=mg(u);$('saveEntry').disabled=!valid||g<=0}
+$('foodSearch').addEventListener('input',renderFoods);$('favoritesOnly').addEventListener('change',renderFoods);$('grams').addEventListener('input',updatePreview);
+document.querySelectorAll('[data-grams]').forEach(b=>b.addEventListener('click',()=>{$('grams').value=b.dataset.grams;updatePreview()}));
+$('minus10').addEventListener('click',()=>{$('grams').value=Math.max(0,(Number($('grams').value)||0)-10);updatePreview()});
+$('plus10').addEventListener('click',()=>{$('grams').value=(Number($('grams').value)||0)+10;updatePreview()});
+$('toggleFavorite').addEventListener('click',()=>{if(!selected)return;if(favorites.has(selected.id))favorites.delete(selected.id);else favorites.add(selected.id);saveFavorites();$('toggleFavorite').textContent=favorites.has(selected.id)?'★ Favorit':'☆ Favorit';renderFoods()});
+async function saveSelectedFood(continueAdding){
+ if(!selected)return;const g=Number($('grams').value);if(!Number.isFinite(g)||g<=0){alert('Bitte eine Menge größer 0 g eingeben.');return}
+ const f=selected,e={id:crypto.randomUUID?crypto.randomUUID():'E'+Date.now()+Math.random().toString(16).slice(2),date:selectedDay,meal:$('meal').value,entry_type:'food',reference_id:f.id,food_name:f.name,quantity_g:g,purine_mg:(Number(f.app_purine_mg_100g)||0)*g/100,uric_acid_equivalent_mg:(Number(f.app_uric_acid_equivalent_mg_100g)||0)*g/100,created_at:new Date().toISOString()};
+ try{await putEntry(e);entries=await getAllEntries();await refreshDayStatusAfterEntryChange(e.date);if(continueAdding){selected=null;$('foodDetails').classList.add('hidden');$('foodSearch').value='';$('favoritesOnly').checked=false;renderFoods();$('foodSearch').focus();window.scrollTo({top:0,behavior:'smooth'});$('foodSaveHint').textContent=f.name+' ('+fmt(g)+' g) gespeichert. Nächstes Lebensmittel auswählen.';}else{showView('today');alert('Eintrag lokal gespeichert.')}}
+ catch(err){alert('Speichern fehlgeschlagen. Der Eintrag wurde nicht bestätigt: '+err.message)}
+}
+$('saveEntry').addEventListener('click',()=>saveSelectedFood(false));
+$('saveAndNext').addEventListener('click',()=>saveSelectedFood(true));
+async function removeEntry(id){if(!confirm('Diesen Eintrag löschen?'))return;const old=entries.find(x=>x.id===id);await deleteEntry(id);entries=await getAllEntries();if(old)await refreshDayStatusAfterEntryChange(old.date);renderToday()}
+function dayKey(d){return localDate(d)}
+function addDays(date,days){const d=new Date(date+'T12:00:00');d.setDate(d.getDate()+days);return dayKey(d)}
+function periodTotals(list){return {days:list.length,purin:list.reduce((a,x)=>a+x.purin,0),ua:list.reduce((a,x)=>a+x.ua,0)}}
+function renderPeriodReports(todaysAll){
+ const box=$('periodReports');box.replaceChildren();
+ const byDate=new Map();for(const e of entries){if(!e.date)continue;const x=byDate.get(e.date)||{purin:0,ua:0,count:0};x.purin+=Number(e.purine_mg)||0;x.ua+=Number(e.uric_acid_equivalent_mg)||0;x.count++;byDate.set(e.date,x)}
+ const selected=new Date(selectedDay+'T12:00:00'),weekday=(selected.getDay()+6)%7,weekStart=addDays(selectedDay,-weekday),weekEnd=addDays(weekStart,6);
+ const weekRows=[];for(let i=0;i<7;i++){const date=addDays(weekStart,i),v=byDate.get(date);if(v)weekRows.push({date,...v})}
+ const monthStart=selectedDay.slice(0,7)+'-01',monthEnd=new Date(selected.getFullYear(),selected.getMonth()+1,0).getDate(),monthRows=[];for(let d=1;d<=monthEnd;d++){const date=selectedDay.slice(0,7)+'-'+String(d).padStart(2,'0'),v=byDate.get(date);if(v)monthRows.push({date,...v})}
+ const mk=(title,rows,range)=>{const card=document.createElement('div');card.className='metric';const h=document.createElement('strong');h.textContent=title;const desc=document.createElement('span');desc.textContent=range+' · '+rows.length+' dokumentierte '+(rows.length===1?'Tage':'Tage');card.append(h,desc);if(rows.length){const total=periodTotals(rows);const av=document.createElement('strong');av.style.fontSize='1.15rem';av.textContent=fmt(total.ua/rows.length)+' mg Ø Harnsäure-Äquivalent/Tag';const p=document.createElement('span');p.textContent=fmt(total.purin/rows.length)+' mg Ø Purin/Tag';card.append(av,p)}else{const none=document.createElement('span');none.textContent='Noch keine dokumentierten Tage.';card.append(none)}return card};
+ const grid=document.createElement('div');grid.className='period-grid';grid.append(mk('Diese Woche',weekRows,dateLabel(weekStart)+' – '+dateLabel(weekEnd)),mk('Dieser Monat',monthRows,selected.toLocaleDateString('de-DE',{month:'long',year:'numeric'})));box.append(grid);
+ if(weekRows.length){const h=document.createElement('h3');h.style.marginTop='16px';h.textContent='Dokumentierte Tage dieser Woche';box.append(h);weekRows.forEach(r=>{const row=document.createElement('div');row.className='period-day';const a=document.createElement('span');a.textContent=dateLabel(r.date);const b=document.createElement('strong');b.textContent=fmt(r.ua)+' mg Harnsäure-Äquivalent';row.append(a,b);box.append(row)})}
+}
+function entryOptions(e){return e.entry_type==='recipe'?recipes.map(r=>({id:r.id,name:r.name,record:r})):foods.map(f=>({id:f.id,name:f.name,record:f}))}
+function renderEntryEdit(row,e){
+ row.classList.add('editing');const panel=document.createElement('div');panel.className='edit-panel';const grid=document.createElement('div');grid.className='edit-grid';
+ const addField=(labelText,control)=>{const wrap=document.createElement('div');const l=document.createElement('label');l.textContent=labelText;wrap.append(l,control);grid.append(wrap)};
+ const amount=document.createElement('input');amount.type='number';amount.min='0.1';amount.step='0.1';amount.value=e.quantity_g;
+ const date=document.createElement('input');date.type='date';date.value=e.date;
+ const meal=document.createElement('select');['Frühstück','Mittagessen','Abendessen','Snack','Getränk'].forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=m;meal.append(o)});meal.value=e.meal;
+ const item=document.createElement('select');item.style.gridColumn='1 / -1';const opts=entryOptions(e);opts.sort((a,b)=>a.name.localeCompare(b.name,'de'));opts.forEach(x=>{const o=document.createElement('option');o.value=x.id;o.textContent=x.name;item.append(o)});item.value=e.reference_id;
+ addField('Menge (g)',amount);addField('Datum',date);addField('Mahlzeit',meal);addField(e.entry_type==='recipe'?'Rezept':'Lebensmittel',item);
+ const actions=document.createElement('div');actions.className='row';actions.style.marginTop='8px';const save=document.createElement('button');save.textContent='Änderungen speichern';const cancel=document.createElement('button');cancel.className='secondary';cancel.textContent='Abbrechen';actions.append(save,cancel);panel.append(grid,actions);row.append(panel);
+ cancel.addEventListener('click',()=>{panel.remove();row.classList.remove('editing')});save.addEventListener('click',async()=>{const g=Number(amount.value),d=date.value,selected=opts.find(x=>x.id===item.value);if(!Number.isFinite(g)||g<=0||!d||!selected){alert('Bitte Menge, Datum und Eintrag prüfen.');return}let purine,ua,name;if(e.entry_type==='recipe'){purine=selected.record.purine_mg_100g*g/100;ua=selected.record.uric_acid_equivalent_mg_100g*g/100;name=selected.record.name}else{purine=(Number(selected.record.app_purine_mg_100g)||0)*g/100;ua=(Number(selected.record.app_uric_acid_equivalent_mg_100g)||0)*g/100;name=selected.record.name}const updated={...e,date:d,meal:meal.value,reference_id:selected.id,food_name:name,quantity_g:g,purine_mg:purine,uric_acid_equivalent_mg:ua,updated_at:new Date().toISOString()};try{await putEntry(updated);entries=await getAllEntries();await refreshDayStatusAfterEntryChange(e.date);if(d!==e.date)await refreshDayStatusAfterEntryChange(d);renderToday()}catch(err){alert('Änderung konnte nicht gespeichert werden: '+err.message)}})
+}
+function renderDayStatus(){
+ const box=$('dayStatusPanel');box.replaceChildren();const has=entries.some(e=>e.date===selectedDay),closed=isDayClosed(selectedDay);const wrap=document.createElement('div');wrap.className='day-status';const text=document.createElement('div');text.className='day-status-text';const strong=document.createElement('strong');const desc=document.createElement('span');
+ if(!has){strong.textContent='Keine Angaben';desc.textContent='Für diesen Tag wurden noch keine Lebensmittel oder Rezeptportionen erfasst.'}
+ else if(closed){strong.textContent='Tageserfassung abgeschlossen';desc.textContent='Du kannst den Tag jederzeit wieder öffnen und Einträge nachtragen.'}
+ else{strong.textContent='Tageserfassung offen';desc.textContent='Alle vorhandenen Einträge zählen bereits für die Durchschnittswerte.'}
+ text.append(strong,desc);wrap.append(text);
+ if(has){const btn=document.createElement('button');btn.className=closed?'secondary':'';btn.textContent=closed?'Tag wieder öffnen':'Tageserfassung abschließen';btn.addEventListener('click',toggleSelectedDayStatus);wrap.append(btn)}
+ box.append(wrap);
+}
+function renderCalendar(){
+ const grid=$('calendarGrid');grid.replaceChildren();const [yy,mm]=calendarMonth.split('-').map(Number),first=new Date(yy,mm-1,1,12),days=new Date(yy,mm,0).getDate(),offset=(first.getDay()+6)%7;
+ $('calendarMonthLabel').textContent=first.toLocaleDateString('de-DE',{month:'long',year:'numeric'});
+ ['Mo','Di','Mi','Do','Fr','Sa','So'].forEach(d=>{const w=document.createElement('div');w.className='calendar-weekday';w.textContent=d;grid.append(w)});
+ for(let i=0;i<offset;i++){const blank=document.createElement('div');grid.append(blank)}
+ for(let d=1;d<=days;d++){
+  const date=calendarMonth+'-'+String(d).padStart(2,'0'),has=entries.some(e=>e.date===date),closed=isDayClosed(date),btn=document.createElement('button');btn.className='calendar-day '+(date===selectedDay?'selected ':'')+(has?(closed?'closed':'open'):'');btn.type='button';btn.setAttribute('aria-label',dateLabel(date)+' – '+(has?(closed?'abgeschlossen':'offen'):'keine Angaben'));const num=document.createElement('span');num.textContent=d;const dot=document.createElement('span');dot.className='dot';dot.textContent=has?(closed?'●':'●'):'·';btn.append(num,dot);btn.addEventListener('click',()=>{selectedDay=date;$('dayPicker').value=date;renderToday()});grid.append(btn);
+ }
+}
+function renderToday(){
+ $('todayDate').textContent=new Date(selectedDay+'T12:00:00').toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+ const todays=entries.filter(e=>e.date===selectedDay);const u=todays.reduce((s,e)=>s+(Number(e.uric_acid_equivalent_mg)||0),0);const p=todays.reduce((s,e)=>s+(Number(e.purine_mg)||0),0);
+ $('dailyUA').textContent=mg(u);$('dailyPurin').textContent=mg(p);$('progressToday').textContent=mg(u);$('progressFill').style.width=Math.min(100,u/500*100)+'%';$('goalText').textContent=mg(u)+' von 500 mg Orientierungswert ('+fmt(u/500*100)+' %)';
+ const box=$('dailyEntries');box.replaceChildren();
+ if(!todays.length){box.textContent='Noch keine Einträge für diesen Tag.';box.className='subtle'}else{
+  box.className='';const order=['Frühstück','Mittagessen','Abendessen','Snack','Getränk'];
+  for(const mealName of order){const group=todays.filter(e=>e.meal===mealName).sort((a,b)=>(a.created_at||'').localeCompare(b.created_at||''));if(!group.length)continue;
+   const section=document.createElement('div');section.className='meal-group';const head=document.createElement('div');head.className='meal-head';const title=document.createElement('strong');title.textContent=mealName;const sum=document.createElement('span');sum.className='subtle';const gu=group.reduce((a,e)=>a+(Number(e.uric_acid_equivalent_mg)||0),0),gp=group.reduce((a,e)=>a+(Number(e.purine_mg)||0),0);sum.textContent=fmt(gu)+' mg Harnsäure-Äquivalent · '+fmt(gp)+' mg Purin';head.append(title,sum);section.append(head);
+   for(const e of group){const row=document.createElement('div');row.className='entry';const details=document.createElement('div');details.className='details';const strong=document.createElement('strong');strong.textContent=e.food_name||e.reference_id;const small=document.createElement('small');small.textContent=fmt(e.quantity_g)+' g · '+mg(e.uric_acid_equivalent_mg)+' Harnsäure-Äquivalent · '+mg(e.purine_mg)+' Purin';details.append(strong,small);const actions=document.createElement('div');actions.className='entry-actions';const edit=document.createElement('button');edit.className='secondary';edit.textContent='Bearbeiten';edit.addEventListener('click',()=>{if(row.querySelector('.edit-panel'))return;renderEntryEdit(row,e)});const del=document.createElement('button');del.className='danger delete';del.textContent='Löschen';del.addEventListener('click',()=>removeEntry(e.id));actions.append(edit,del);row.append(details,actions);section.append(row)}box.append(section)
+  }
+ }
+ renderDayStatus();renderCalendar();renderPeriodReports(todays);renderDietTrend();
+}
+function backupPayload(){
+ return {format:'purinetracker-local-backup',version:6,exported_at:new Date().toISOString(),entries,weights,bloodTests,favorites:[...favorites],recipes,recipeIngredients,dayStatuses,settings:{dailyTargetMg:500}};
+}
+function downloadBackup(data,filename){
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.style.display='none';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);
+}
+$('exportBackup').addEventListener('click',()=>{
+ downloadBackup(backupPayload(),'PurineTracker_Vollbackup_'+localDate()+'.json');
+ $('backupStatus').textContent='Vollständiges Backup wurde zum Download bereitgestellt.';
+});
+$('chooseBackup').addEventListener('click',()=>$('backupFile').click());
+function validateBackup(d){
+ if(!d||d.format!=='purinetracker-local-backup'||![2,3,4,5,6].includes(d.version))throw new Error('Dateiformat oder Backup-Version wird nicht unterstützt.');
+ for(const key of ['entries','weights','bloodTests','favorites'])if(!Array.isArray(d[key]??(key==='favorites'?[]:null)))throw new Error('Im Backup fehlt ein gültiger Bereich: '+key);
+ const arrays=[['Tagesprotokoll','entries','id'],['Gewicht','weights','id'],['Blutwerte','bloodTests','id']];
+ for(const [label,key,idKey] of arrays){const a=d[key]||[];const ids=new Set();for(const r of a){if(!r||typeof r!=='object'||!r[idKey]||ids.has(r[idKey]))throw new Error(label+': Eintrag ohne eindeutige ID gefunden.');ids.add(r[idKey]);}}
+ for(const r of d.entries||[]){if(typeof r.quantity_g!=='number'||!Number.isFinite(r.quantity_g)||r.quantity_g<0||typeof r.date!=='string')throw new Error('Tagesprotokoll enthält ungültige Mengen- oder Datumswerte.');}
+ for(const r of d.weights||[]){if(typeof r.kg!=='number'||!Number.isFinite(r.kg)||r.kg<=0||r.kg>500)throw new Error('Gewichtsbereich enthält einen ungültigen Messwert.');}
+ for(const r of d.bloodTests||[]){if(typeof r.mg_dl!=='number'||!Number.isFinite(r.mg_dl)||r.mg_dl<=0||r.mg_dl>50)throw new Error('Blutwertebereich enthält einen ungültigen Messwert.');}
+ if((d.favorites||[]).some(x=>typeof x!=='string'))throw new Error('Favoritenliste ist ungültig.');
+ const ds=Array.isArray(d.dayStatuses)?d.dayStatuses:[];const statusDates=new Set();for(const x of ds){if(!x||typeof x.date!=='string'||x.id!==x.date||x.status!=='closed'||statusDates.has(x.date))throw new Error('Tagesstatus enthält ungültige oder doppelte Angaben.');statusDates.add(x.date)}
+ const rs=Array.isArray(d.recipes)?d.recipes:[],ris=Array.isArray(d.recipeIngredients)?d.recipeIngredients:[];const recipeIds=new Set();for(const r of rs){if(!r||!r.id||recipeIds.has(r.id)||typeof r.name!=='string'||!r.name.trim()||!Number.isFinite(r.finished_weight_g)||r.finished_weight_g<=0)throw new Error('Rezeptdaten sind ungültig oder enthalten doppelte IDs.');recipeIds.add(r.id)}for(const x of ris){if(!x||!x.id||!recipeIds.has(x.recipe_id)||!Number.isFinite(x.quantity_g)||x.quantity_g<=0)throw new Error('Rezeptzutaten sind ungültig oder verweisen auf ein fehlendes Rezept.')}
+ return {entries:d.entries||[],weights:d.weights||[],bloodTests:d.bloodTests||[],favorites:d.favorites||[],recipes:rs,recipeIngredients:ris,dayStatuses:ds,settings:d.settings&&typeof d.settings==='object'?d.settings:{dailyTargetMg:500}};
+}
+function replacePersonalData(data){
+ return new Promise((resolve,reject)=>{
+  const tx=db.transaction([STORE,WEIGHT_STORE,BLOOD_STORE,RECIPE_STORE,RECIPE_INGREDIENT_STORE,DAY_STATUS_STORE],'readwrite');
+  for(const [name,items] of [[STORE,data.entries],[WEIGHT_STORE,data.weights],[BLOOD_STORE,data.bloodTests],[RECIPE_STORE,data.recipes],[RECIPE_INGREDIENT_STORE,data.recipeIngredients],[DAY_STATUS_STORE,data.dayStatuses]]){
+   const store=tx.objectStore(name);store.clear();for(const item of items)store.put(item);
+  }
+  tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||new Error('Datenbankfehler'));tx.onabort=()=>reject(tx.error||new Error('Wiederherstellung abgebrochen'));
+ });
+}
+$('backupFile').addEventListener('change',async()=>{
+ const file=$('backupFile').files?.[0];if(!file)return;
+ try{
+  const parsed=JSON.parse(await file.text()),data=validateBackup(parsed);
+  const summary=`Backup-Version: ${parsed.version}\nTagesprotokolle: ${data.entries.length}\nGewichtsmessungen: ${data.weights.length}\nBlutwerte: ${data.bloodTests.length}\nFavoriten: ${data.favorites.length}\nRezepte: ${data.recipes.length}\nRezeptzutaten: ${data.recipeIngredients.length}\nAbgeschlossene Tage: ${data.dayStatuses.length}\n\nACHTUNG: Alle bisherigen persönlichen Daten auf diesem Gerät werden ersetzt. Die Lebensmittel-Stammdaten bleiben erhalten.\n\nFortfahren?`;
+  if(!confirm(summary)){ $('backupStatus').textContent='Wiederherstellung abgebrochen. Vorhandene Daten bleiben unverändert.';return; }
+  downloadBackup(backupPayload(),'PurineTracker_Sicherheitskopie_vor_Wiederherstellung_'+localDate()+'.json');
+  $('backupStatus').textContent='Sicherheitskopie wurde zum Download bereitgestellt. Wiederherstellung läuft …';
+  await replacePersonalData(data);
+  favorites=new Set(data.favorites);saveFavorites();localStorage.setItem(INITIALIZED_KEY,'1');
+  entries=await getAllEntries();weights=await getAllFrom(WEIGHT_STORE);bloodTests=await getAllFrom(BLOOD_STORE);recipes=await getAllFrom(RECIPE_STORE);recipeIngredients=await getAllFrom(RECIPE_INGREDIENT_STORE);dayStatuses=await getAllFrom(DAY_STATUS_STORE);
+  renderToday();renderProgress();renderFoods();renderRecipes();
+  $('backupStatus').textContent='Wiederherstellung erfolgreich. Persönliche Daten wurden vollständig ersetzt.';
+  alert('Backup erfolgreich wiederhergestellt. Deine bisherigen persönlichen Daten wurden ersetzt.');
+ }catch(err){
+  $('backupStatus').textContent='Wiederherstellung fehlgeschlagen: '+err.message;
+  alert('Backup konnte nicht wiederhergestellt werden: '+err.message+'\nDie vorhandenen Daten wurden nicht absichtlich gelöscht.');
+ }finally{$('backupFile').value='';}
+});
+$('clearEntries').addEventListener('click',async()=>{if(!confirm('Wirklich alle gespeicherten Tagesprotokoll-Einträge auf diesem Gerät löschen? Diese Aktion kann nicht rückgängig gemacht werden.'))return;const tx=db.transaction([STORE,DAY_STATUS_STORE],'readwrite');tx.objectStore(STORE).clear();tx.objectStore(DAY_STATUS_STORE).clear();tx.oncomplete=async()=>{entries=await getAllEntries();dayStatuses=await getAllFrom(DAY_STATUS_STORE);renderToday();alert('Tagesprotokoll geleert.')};tx.onerror=()=>alert('Löschen fehlgeschlagen.')});
+(async()=>{
+ setOnline();loadFavorites();
+ try{
+  await loadImport();
+  await openDB();
+  entries=await getAllEntries();dayStatuses=await getAllFrom(DAY_STATUS_STORE);
+  weights=await getAllFrom(WEIGHT_STORE);bloodTests=await getAllFrom(BLOOD_STORE);recipes=await getAllFrom(RECIPE_STORE);recipeIngredients=await getAllFrom(RECIPE_INGREDIENT_STORE);
+  if(!localStorage.getItem(INITIALIZED_KEY)) {
+   if(!weights.length) {await putRecord(WEIGHT_STORE,{id:'baseline-weight-2026-10-22',date:'2026-10-22',kg:95,baseline:true,created_at:new Date().toISOString()});weights=await getAllFrom(WEIGHT_STORE)}
+   if(!bloodTests.length) {await putRecord(BLOOD_STORE,{id:'baseline-blood-unknown-date',date:'',mg_dl:8.5,baseline:true,created_at:new Date().toISOString()});bloodTests=await getAllFrom(BLOOD_STORE)}
+   localStorage.setItem(INITIALIZED_KEY,'1');
+  }
+  renderProgress();
+  $('storageInfo').textContent='IndexedDB verfügbar. Tagesprotokoll und Tagesabschlüsse werden lokal auf diesem Gerät gespeichert.';
+  renderToday();renderFoods();renderRecipes();updateRecipeDraft();
+ }catch(err){
+  $('dbInfo').innerHTML='Import oder Datenbank konnte nicht geladen werden: <span class="error"></span>';$('dbInfo').querySelector('.error').textContent=err.message;
+  $('storageInfo').textContent='Lokale Datenbank nicht verfügbar. Öffne den Prototyp über einen lokalen Webserver oder eine HTTPS-Adresse; bei file:// kann der Browser lokale Datenbanken blockieren.';
+  $('quickFood').disabled=true;
+ }
+ if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+})();
+</script>
+</body>
+</html>
